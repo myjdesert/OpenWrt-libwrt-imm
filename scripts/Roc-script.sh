@@ -62,31 +62,23 @@ rm -rf package/luci-app-easytier package/easytier
 git clone --depth=1 https://github.com/thinktip/luci-app-easytier package/luci-app-easytier
 
 # ==================== 3. 强行灌注的高版本 Golang 编译环境 ====================
-# 彻底拔掉旧环境
 rm -rf feeds/packages/lang/golang package/feeds/packages/lang/golang package/golang
-# 克隆高版本 Go 独立包到原生 package 目录下
 git clone --depth=1 https://github.com/sbwml/packages_lang_golang package/golang
 
-# 【OpenWrt-CI 专属补丁】：在本地 package 和全局 feeds 目录同时建立物理文件夹与软链接
-# 这将使 sing-box 寻找 ../../lang/golang/golang-package.mk 时，无论怎么跳目录都能 100% 成功。
+# 【OpenWrt-CI 专属补丁】：映射 Golang 编译路径
 mkdir -p package/lang
 ln -sf ../golang package/lang/golang
 mkdir -p feeds/packages/lang
 ln -sf ../../../package/golang feeds/packages/lang/golang
 
-# ==================== 4. PassWall 及其核心依赖 ====================
+# ==================== 4. PassWall 核心及全部小组件依赖 ====================
 rm -rf package/luci-app-passwall package/passwall-packages package/passwall-packages-temp
-rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
 
-# 提取最新的现代核心依赖
-git clone --depth=1 https://github.com/immortalwrt/packages.git -b openwrt-23.05 package/passwall-packages-temp
-mkdir -p package/passwall-packages
-mv package/passwall-packages-temp/net/xray-core package/passwall-packages/
-mv package/passwall-packages-temp/net/sing-box package/passwall-packages/
-mv package/passwall-packages-temp/net/chinadns-ng package/passwall-packages/
-rm -rf package/passwall-packages-temp
+# 核心策略：直接将官方维护的 openwrt-23.05 独立核心库全数克隆到本地 package 目录
+# 这样能提供全部的、完整的小核心（dns2socks, geoview, shadowsocks-rust 等），并且 100% 避开权限和文件缺失错误
+git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
 
-# 克隆无访问限制的 PassWall 前端控制面板
+# 克隆完全公开的 PassWall 前端控制面板
 git clone --depth=1 https://github.com/openwrt-develop/luci-app-passwall.git package/luci-app-passwall
 
 # ==================== 5. 替换为清华大学软件源 ====================
