@@ -53,13 +53,18 @@ git clone --depth=1 https://github.com/tty228/luci-app-wechatpush package/luci-a
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-momo package/momo
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-nikki package/nikki
 
-# ==================== 1. 集客无线AC控制器 ====================
-rm -rf package/luci-app-gecoosac package/openwrt-gecoosac
-git clone --depth=1 https://github.com/lwb1978/openwrt-gecoosac package/openwrt-gecoosac
+# ==================== 1. 【完美修复】集客无线AC控制器 ====================
+rm -rf package/luci-app-gecoosac package/openwrt-gecoosac feeds/luci/applications/luci-app-gecoosac
+git clone --depth=1 https://github.com/openwrt-fork/openwrt-gecoosac package/luci-app-gecoosac
 
-# ==================== 2. EasyTier 异地组网 ====================
-rm -rf package/luci-app-easytier package/easytier
-git clone --depth=1 https://github.com/thinktip/luci-app-easytier package/luci-app-easytier
+# ==================== 2. 【完美修复】从官方主仓精准克隆最新 EasyTier ====================
+rm -rf package/luci-app-easytier package/easytier package/EasyTier feeds/luci/applications/luci-app-easytier
+git clone --depth=1 --filter=blob:none --sparse https://github.com/EasyTier/EasyTier package/EasyTier
+cd package/EasyTier
+git sparse-checkout set io/easytier-luci
+cd ../..
+mv package/EasyTier/io/easytier-luci package/luci-app-easytier
+rm -rf package/EasyTier
 
 # ==================== 3. 强行灌注的高版本 Golang 编译环境 ====================
 rm -rf feeds/packages/lang/golang package/feeds/packages/lang/golang package/golang
@@ -73,12 +78,7 @@ ln -sf ../../../package/golang feeds/packages/lang/golang
 
 # ==================== 4. PassWall 核心及全部小组件依赖 ====================
 rm -rf package/luci-app-passwall package/passwall-packages package/passwall-packages-temp
-
-# 核心策略：直接将官方维护的 openwrt-23.05 独立核心库全数克隆到本地 package 目录
-# 这样能提供全部的、完整的小核心（dns2socks, geoview, shadowsocks-rust 等），并且 100% 避开权限和文件缺失错误
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
-
-# 克隆完全公开的 PassWall 前端控制面板
 git clone --depth=1 https://github.com/openwrt-develop/luci-app-passwall.git package/luci-app-passwall
 
 # ==================== 5. 替换为清华大学软件源 ====================
