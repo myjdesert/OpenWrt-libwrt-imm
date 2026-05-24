@@ -50,10 +50,6 @@ function git_sparse_clone() {
 }
 
 # ariang & frp & Watchcat & WolPlus & Argon & Aurora & Go & OpenList & Lucky & wechatpush & OpenAppFilter & 集客无线AC控制器 & 雅典娜LED控制
-git_sparse_clone ariang https://github.com/laipeng668/packages net/ariang
-git_sparse_clone frp https://github.com/laipeng668/packages net/frp
-mv -f package/frp feeds/packages/net/frp
-git_sparse_clone frp https://github.com/laipeng668/luci applications/luci-app-frpc applications/luci-app-frps
 mv -f package/luci-app-frpc feeds/luci/applications/luci-app-frpc
 mv -f package/luci-app-frps feeds/luci/applications/luci-app-frps
 git_sparse_clone openwrt-23.05 https://github.com/immortalwrt/packages utils/watchcat
@@ -66,32 +62,19 @@ git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config feeds/luc
 git clone --depth=1 https://github.com/eamonxg/luci-theme-aurora feeds/luci/themes/luci-theme-aurora
 git clone --depth=1 https://github.com/eamonxg/luci-app-aurora-config feeds/luci/applications/luci-app-aurora-config
 git clone --depth=1 https://github.com/sbwml/packages_lang_golang feeds/packages/lang/golang
-git clone --depth=1 https://github.com/sbwml/luci-app-openlist2 package/openlist2
 git clone --depth=1 https://github.com/gdy666/luci-app-lucky package/luci-app-lucky
 git clone --depth=1 https://github.com/tty228/luci-app-wechatpush package/luci-app-wechatpush
-git clone --depth=1 https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
 git clone --depth=1 https://github.com/laipeng668/luci-app-gecoosac package/luci-app-gecoosac
-git clone --depth=1 https://github.com/NONGFAH/luci-app-athena-led package/luci-app-athena-led
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-momo package/momo
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-nikki package/nikki
-git clone --depth=1 https://github.com/0x676e67/luci-app-easytier package/luci-app-easytier
-chmod +x package/luci-app-athena-led/root/etc/init.d/athena_led package/luci-app-athena-led/root/usr/sbin/athena-led
+
+# 1. 彻底移除旧的、可能残留或导致报错的同名目录
+rm -rf package/luci-app-easytier package/easytier package/luci-app-passwall
+git clone --depth=1 https://github.com/gandalf8/luci-app-easytier.git package/luci-app-easytier
+
 
 ### PassWall & OpenClash ###
 
 # 移除 OpenWrt Feeds 自带的核心库
 rm -rf feeds/packages/net/{xray-core,v2ray-geodata,sing-box,chinadns-ng,dns2socks,hysteria,ipt2socks,microsocks,naiveproxy,shadowsocks-libev,shadowsocks-rust,shadowsocksr-libev,simple-obfs,tcping,trojan-plus,tuic-client,v2ray-plugin,xray-plugin,geoview,shadow-tls}
-git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages package/passwall-packages
-
-# 移除 OpenWrt Feeds 过时的LuCI版本
-rm -rf feeds/luci/applications/luci-app-passwall
-rm -rf feeds/luci/applications/luci-app-openclash
-git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall package/luci-app-passwall
-git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2
-git clone --depth=1 https://github.com/vernesong/OpenClash package/luci-app-openclash
-
-# 清理 PassWall 的 chnlist 规则文件
-echo "baidu.com"  > package/luci-app-passwall/luci-app-passwall/root/usr/share/passwall/rules/chnlist
-
-# ./scripts/feeds update -a
-# ./scripts/feeds install -a
+git clone --depth=1 https://github.com/immortalwrt/luci-app-passwall.git package/luci-app-passwall
