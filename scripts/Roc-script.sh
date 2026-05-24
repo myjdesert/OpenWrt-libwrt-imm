@@ -53,18 +53,17 @@ git clone --depth=1 https://github.com/tty228/luci-app-wechatpush package/luci-a
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-momo package/momo
 git clone --depth=1 https://github.com/nikkinikki-org/OpenWrt-nikki package/nikki
 
-# ==================== 1. 【完美修复】集客无线AC控制器 ====================
-rm -rf package/luci-app-gecoosac package/openwrt-gecoosac feeds/luci/applications/luci-app-gecoosac
-git clone --depth=1 https://github.com/openwrt-fork/openwrt-gecoosac package/luci-app-gecoosac
+# ==================== 1. 【物理拆包修复】最新集客无线AC控制器 ====================
+rm -rf package/luci-app-gecoosac package/gecoosac package/openwrt-gecoosac feeds/luci/applications/luci-app-gecoosac
+git clone --depth=1 https://github.com/openwrt-fork/openwrt-gecoosac package/openwrt-gecoosac
+mv package/openwrt-gecoosac/gecoosac package/gecoosac
+mv package/openwrt-gecoosac/luci-app-gecoosac package/luci-app-gecoosac
+rm -rf package/openwrt-gecoosac
 
-# ==================== 2. 【完美修复】从官方主仓精准克隆最新 EasyTier ====================
+# ==================== 2. 【回归标准】直接拉取官方独立 EasyTier 仓库 ====================
 rm -rf package/luci-app-easytier package/easytier package/EasyTier feeds/luci/applications/luci-app-easytier
-git clone --depth=1 --filter=blob:none --sparse https://github.com/EasyTier/EasyTier package/EasyTier
-cd package/EasyTier
-git sparse-checkout set io/easytier-luci
-cd ../..
-mv package/EasyTier/io/easytier-luci package/luci-app-easytier
-rm -rf package/EasyTier
+# 根据你截图的官方规范路径，直接满速克隆到合规的二级应用目录下
+git clone --depth=1 https://github.com/EasyTier/luci-app-easytier.git package/luci-app-easytier
 
 # ==================== 3. 强行灌注的高版本 Golang 编译环境 ====================
 rm -rf feeds/packages/lang/golang package/feeds/packages/lang/golang package/golang
@@ -76,7 +75,7 @@ ln -sf ../golang package/lang/golang
 mkdir -p feeds/packages/lang
 ln -sf ../../../package/golang feeds/packages/lang/golang
 
-# ==================== 4. PassWall 核心及全部小组件依赖 ====================
+# ==================== 4. PassWall 核心及全部小组件依赖（剔除无用插件） ====================
 rm -rf package/luci-app-passwall package/passwall-packages package/passwall-packages-temp
 git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages.git package/passwall-packages
 git clone --depth=1 https://github.com/openwrt-develop/luci-app-passwall.git package/luci-app-passwall
