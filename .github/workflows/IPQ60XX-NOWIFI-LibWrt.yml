@@ -7,8 +7,10 @@ on:
   #   - cron: 0 20 * * *
 
 env:
-  REPO_URL: https://github.com/LiBwrt/openwrt-6.x.git
-  REPO_BRANCH: 25.12-nss
+  # 1. 切换到 LibWrt 的正式稳定版源码仓库
+  REPO_URL: https://github.com/LiBwrt/openwrt-24.10.git
+  # 2. 将分支由 25.12-nss 变更为 24.10 官方稳定版分支
+  REPO_BRANCH: openwrt-24.10
   CONFIG_FILE: configs/IPQ60XX-NOWIFI.config
   GENERAL_CONFIG_FILE: configs/General.config
   DIY_SCRIPT: scripts/Roc-script.sh
@@ -59,7 +61,12 @@ jobs:
         echo "OPENWRT_PATH=$PWD" >> $GITHUB_ENV
         VERSION_INFO=$(git show -s --date=short --format="作者: %an<br/>时间: %cd<br/>内容: %s<br/>hash: %H")
         echo "VERSION_INFO=$VERSION_INFO" >> $GITHUB_ENV
-        VERSION_KERNEL=$(grep -oP 'LINUX_KERNEL_HASH-\K[0-9]+\.[0-9]+\.[0-9]+' target/linux/generic/kernel-6.12)
+        # 针对 24.10 稳定版的内核路径进行适配读取
+        if [ -f target/linux/generic/kernel-6.6 ]; then
+          VERSION_KERNEL=$(grep -oP 'LINUX_KERNEL_HASH-\K[0-9]+\.[0-9]+\.[0-9]+' target/linux/generic/kernel-6.6)
+        else
+          VERSION_KERNEL="6.6-Stable"
+        fi
         echo "VERSION_KERNEL=$VERSION_KERNEL" >> $GITHUB_ENV
 
     - name: Generate Variables(生成变量)
@@ -139,8 +146,11 @@ jobs:
         cd $OPENWRT_PATH/bin/targets/*/*
         cp $OPENWRT_PATH/.config ipq60xx.config
         mv config.buildinfo ipq60xx.config.buildinfo
-        mv -f $OPENWRT_PATH/bin/packages/*/*/*.apk packages
-        tar -zcf ipq60xx.Packages.tar.gz packages
+        # 适配稳定版的 opkg 包管理器后缀（将原本的 .apk 修改为 .ipk）
+        if [ -d "$OPENWRT_PATH/bin/packages" ]; then
+          mv -f $OPENWRT_PATH/bin/packages/*/*/*.ipk packages 2>/dev/null || true
+          tar -zcf ipq60xx.Packages.tar.gz packages 2>/dev/null || true
+        fi
         rm -rf packages feeds.buildinfo version.buildinfo sha256sums profiles.json
         echo "FIRMWARE_PATH=$PWD" >> $GITHUB_ENV
 
@@ -156,18 +166,19 @@ jobs:
       uses: ncipollo/release-action@main
       with:
         name: ${{ env.FIRMWARE_TAG }} - ${{ env.DATE }}
-        allowUpdates: false  # 改为false，不覆盖现有release
-        tag: ${{ env.FIRMWARE_TAG }}-${{ github.run_id }}-${{ github.run_attempt }}  # 使用唯一tag
+        allowUpdates: false  
+        tag: ${{ env.FIRMWARE_TAG }}-${{ github.run_id }}-${{ github.run_attempt }}  
         token: ${{ secrets.GITHUB_TOKEN }}
         artifacts: ${{ env.FIRMWARE_PATH }}/*
         body: |
           **This is OpenWrt Firmware for ${{ env.FIRMWARE_TAG }}**
           ### 📒 固件信息
-          - 这是没有WiFi的NSS的6.12内核固件，默认主题为Aurora；该固件在ImmortalWrt的基础上，添加了额外的软件包
+          - 这是没有WiFi的NSS的24.10稳定版固件，默认主题为Aurora
           - ⚽ 固件源码: ${{ env.REPO_URL }}
           - 💝 源码分支: ${{ env.REPO_BRANCH }}
           - 🌐 默认地址: **192.168.1.1**
           - 🔑 默认密码: password
+          - 📦 包管理器：**opkg（成熟稳定版）**
           ### 🧊 固件版本
           - 编译时间：**${{ env.DATE }}**
           - 固件内核版本：**${{ env.VERSION_KERNEL }}**
@@ -176,11 +187,9 @@ jobs:
 
     - name: Delete Old Cache(删除旧缓存)
       run: |
-        # 获取缓存列表并删除
         gh cache list --key ${{ env.SOURCE_REPO }}-${{ env.REPO_BRANCH }}-${{ env.DEVICE_TARGET }}-${{ env.DEVICE_SUBTARGET }}- --json key --jq '.[] | .key' | while read -r key; do
           gh cache delete "$key"
         done
-        # 输出缓存状态
         echo "========cache status========"
         echo "ccache: $(du -sh $OPENWRT_PATH/.ccache | cut -f 1)"
         echo "staging: $(du -sh $OPENWRT_PATH/staging_dir | cut -f 1)"
